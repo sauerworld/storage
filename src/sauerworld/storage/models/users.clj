@@ -145,3 +145,7 @@
   (v/validation-set
    (v/presence-of :password)
    password-match))
+
+(defn validate-password
+  [_ params]
+  (password-validator params))

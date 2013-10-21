@@ -19,6 +19,7 @@
    :users/add-pubkey users/add-pubkey
    :users/update-password users/update-password
    :users/validate-registration users/validate-registration
+   :users/validate-password users/validate-password
    :articles/insert-article articles/insert-article
    :articles/update-article articles/update-article
    :articles/find-all-articles articles/find-all-articles
