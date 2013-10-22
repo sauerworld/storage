@@ -38,17 +38,22 @@
         validation-key (or validation-key (random-uuid))
         validated (or validated false)
         password (hash-password password)
-        created (or created (to-date (now)))]
-    (-> (base-users-query db)
-        (k/insert
-         (k/values {:username username
-                    :password password
-                    :email email
-                    :validation_key validation-key
-                    :validated validated
-                    :pubkey pubkey
-                    :created created
-                    :admin admin})))))
+        created (or created (to-date (now)))
+        result (try
+                 (-> (base-users-query db)
+                     (k/insert
+                      (k/values {:username username
+                                 :password password
+                                 :email email
+                                 :validation_key validation-key
+                                 :validated validated
+                                 :pubkey pubkey
+                                 :created created
+                                 :admin admin})))
+                 (catch Exception e {:failure (str e)}))]
+    (if (contains? result :failure)
+      result
+      {:success (vals result)})))
 
 (defn get-by-validation-key
   [db validation-key]
