@@ -3,7 +3,8 @@
             [sauerworld.storage.models.articles :as articles]
             [sauerworld.storage.models.tournaments :as tournaments]
             [sauerworld.storage.db :refer (create-db)]
-            [immutant.messaging :as msg]))
+            [immutant.messaging :as msg]
+            [immutant.util :refer (in-immutant? app-relative)]))
 
 (def world (atom {}))
 
@@ -22,6 +23,7 @@
    :users/validate-password users/validate-password
    :articles/insert-article articles/insert-article
    :articles/update-article articles/update-article
+   :articles/find-article articles/find-article
    :articles/find-all-articles articles/find-all-articles
    :articles/find-category-articles articles/find-category-articles
    :tournaments/insert-tournamet tournaments/insert-tournament
@@ -42,13 +44,21 @@
       {:status :error})))
 
 (defn start []
-  (let [db (create-db db-resource)]
+  (msg/start "queue/storage")
+  (let [db-path (if (in-immutant?)
+                  (-> db-resource
+                      app-relative
+                      str)
+                  db-resource)
+        db (create-db db-path)
+        listener (msg/respond "queue/storage" (make-api-responder db))]
     (do
-      (msg/start "queue/storage")
-      (msg/respond "queue/storage" (make-api-responder db))
-      (swap! world assoc :db db))))
+      (swap! world assoc :db db)
+      (swap! world assoc :listener listener))))
 
 (defn stop []
   (when-let [db (@world :db)]
     (let [datasource (-> db :pool deref :datasource)]
-      (.close datasource))))
+      (.close datasource)))
+  (when-let [listener (@world :listener)]
+    (msg/unlisten listener)))
