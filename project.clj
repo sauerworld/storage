@@ -13,5 +13,6 @@
              {:source-paths ["dev"]
               :dependencies [[org.clojars.jcrossley3/tools.namespace "0.2.4.1"]
                              [org.immutant/immutant "1.0.1"]
-                             [ring-mock "0.1.5"]]}
-             :immutant {:nrepl-port 0}})
+                             [ring-mock "0.1.5"]]
+              :immutant {:nrepl-port 0}}}
+  :immutant {:init "sauerworld.storage.core/start"})
