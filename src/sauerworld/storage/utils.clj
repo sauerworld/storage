@@ -20,6 +20,7 @@
    child-name key."
   [parent-ms child-ms parent-k child-k child-name]
   (let [parent-ms (vec-wrap-if (map? parent-ms) parent-ms)
+        child-ms (vec-wrap-if (map? child-ms) child-ms)
         grouped-children (group-by #(get % child-k) child-ms)
         join-fn (fn [parent]
                   (let [parent-v (get parent parent-k)]
