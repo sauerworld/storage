@@ -33,7 +33,12 @@
    :tournaments/get-tournament-by-id tournaments/get-tournament-by-id
    :tournaments/get-current-tournament tournaments/get-current-tournament
    :tournaments/get-tournaments tournaments/get-tournaments
-   :tournaments/get-tournament tournaments/get-tournament})
+   :tournaments/get-tournament tournaments/get-tournament
+   :tournaments/get-event-by-id tournaments/get-event-by-id
+   :tournaments/get-tournament-for-event tournaments/get-tournament-for-event
+   :tournaments/get-event-signups tournaments/get-event-signups
+   :tournaments/update-team tournaments/update-team
+   :tournaments/delete-registration tournaments/delete-registration})
 
 (defn make-api-responder
   [db]

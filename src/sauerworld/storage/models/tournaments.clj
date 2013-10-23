@@ -29,7 +29,8 @@
                   :registration_open registration-open}]
     (-> (base-tournaments-query db)
         (k/insert
-         (k/values t-entity)))))
+         (k/values t-entity))
+        (vals))))
 
 (defn insert-event
   [db {:keys [tournament name team-mode]}]
@@ -41,7 +42,8 @@
         (k/insert
          (k/values {:name name
                     :tournament tournament
-                    :team_mode team-mode})))))
+                    :team_mode team-mode}))
+        (vals))))
 
 (defn insert-registration
   [db {:keys [event user team created]}]
@@ -60,7 +62,8 @@
          (k/values {:event event
                     :user user
                     :team team
-                    :created created})))))
+                    :created created}))
+        (vals))))
 
 (defn get-next-tournament
   [db & [date]]
@@ -99,24 +102,31 @@
          (k/where {:tournament id})))))
 
 (defn get-event-signups
-  [db event]
+  "Gets signups for a given event (optionally for a given user)."
+  [db event & [user]]
   (let [id (cond
             (map? event) (-> event :id vector)
             (and (coll? event) (map? (first event))) (map :id event)
             (coll? event) event
-            :else (vector event))]
-    (-> (base-registrations-query db)
-        (k/select
-         (k/where {:event [in id]})))))
+            :else (vector event))
+        base-query (-> (base-registrations-query db)
+                       (k/select*)
+                       (k/where {:event [in id]}))
+        user (when user
+               (cond (map? user) (:id user)
+                     (number? user) user
+                     :else nil))
+        final-query (if user
+                      (k/where base-query {:user user})
+                      base-query)]
+    (k/exec final-query)))
 
 (defn get-tournament-signups
   [db tournament]
   (let [id (if (number? tournament)
              (int tournament)
              (-> tournament :id int))
-        events (get-tournament-events db id)
-
-        ]
+        events (get-tournament-events db id)]
     (-> (base-registrations-query db)
         (k/select
          (k/join :inner
@@ -166,6 +176,24 @@
      (fn [t] (apply get-tournament db t args))
      tournaments)))
 
+(defn get-event-by-id
+  [db event]
+  (if (map? event)
+    event
+    (-> (base-events-query db)
+        (k/select
+         (k/where {:id event})
+         (k/limit 1))
+        first)))
+
+(defn get-tournament-for-event
+  [db event]
+  (when-let [event (cond
+                  (number? event) (get-event-by-id db event)
+                  (and (map? event) (:tournament event)) event
+                  :else nil)]
+    (get-tournament-by-id db (:tournament event))))
+
 (defn update-team
   [db registration team]
   (when-let [id (:id registration)]
@@ -173,3 +201,14 @@
         (k/update
          (k/set-fields {"team" team})
          (k/where {:id id})))))
+
+(defn delete-registration
+  [db registration]
+  (let [registration (cond
+                      (map? registration) (:id registration)
+                      (number? registration) registration
+                      :else nil)]
+    (when registration
+      (-> (base-registrations-query db)
+          (k/delete
+           (k/where {:id registration}))))))
