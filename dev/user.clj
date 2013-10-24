@@ -11,10 +11,17 @@
             [sauerworld.storage.models.articles :as articles]
             [sauerworld.storage.models.tournaments :as tournaments]
             [immutant.messaging :as msg]
+            [immutant.util :refer :all]
             [clojure.tools.namespace.repl :refer (refresh)]))
 
 (def db-path
-  "resources/db/main")
+  (let [base-path "resources/db/main"]
+    (if (in-immutant?)
+      (str (app-relative base-path))
+      base-path)))
+
+(def db-spec
+  (db/create-h2-spec db-path))
 
 (require '[clojure.java.jdbc :as j])
 
