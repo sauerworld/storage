@@ -18,7 +18,8 @@
                  :content content
                  :category category}]
     (-> (base-articles-query db)
-        (k/insert (k/values article)))))
+        (k/insert (k/values article))
+        (vals))))
 
 (defn update-article
   [db {:keys [id date title author content category]}]
