@@ -4,7 +4,7 @@
             [sauerworld.storage.models.tournaments :as tournaments]
             [sauerworld.storage.db :refer (create-db)]
             [immutant.messaging :as msg]
-            [immutant.util :refer (in-immutant? app-relative)]))
+            [immutant.util :refer (in-immutant? app-relative at-exit)]))
 
 (def world (atom {}))
 
@@ -48,6 +48,13 @@
        :response (apply req-fn db params)}
       {:status :error})))
 
+(defn stop []
+  (when-let [db (@world :db)]
+    (let [datasource (-> db :pool deref :datasource)]
+      (.close datasource)))
+  (when-let [listener (@world :listener)]
+    (msg/unlisten listener)))
+
 (defn start []
   (msg/start "queue/storage")
   (let [db-path (if (in-immutant?)
@@ -59,11 +66,5 @@
         listener (msg/respond "queue/storage" (make-api-responder db))]
     (do
       (swap! world assoc :db db)
-      (swap! world assoc :listener listener))))
-
-(defn stop []
-  (when-let [db (@world :db)]
-    (let [datasource (-> db :pool deref :datasource)]
-      (.close datasource)))
-  (when-let [listener (@world :listener)]
-    (msg/unlisten listener)))
+      (swap! world assoc :listener listener)
+      (at-exit stop))))
