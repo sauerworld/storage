@@ -84,7 +84,9 @@
 
 (defn add-pubkey
   [db user pubkey]
-  (when-let [id (:id user)]
+  (when-let [id (cond
+                 (number? user) user
+                 (map? user) (:id user))]
     (-> (base-users-query db)
         (k/update
          (k/set-fields {"PUBKEY" pubkey})
