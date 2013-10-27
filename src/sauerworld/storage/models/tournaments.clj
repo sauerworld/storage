@@ -91,7 +91,8 @@
     (-> (base-tournaments-query db)
         (k/select
          (k/where {:date [> yesterday]})
-         (k/order :date :asc)))))
+         (k/order :date :asc))
+        first)))
 
 (defn get-tournament-events
   [db tournament]
